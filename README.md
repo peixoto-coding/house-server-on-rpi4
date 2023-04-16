@@ -72,7 +72,16 @@ You can follow the DuckDNS installation [here](https://www.duckdns.org/install.j
 ```
 6. Run the docker-compose.yaml file:
 ```docker-compose -f docker-compose.yaml up -d```
-7. You should now be able to access your services on the internet by going to the urls you defined, for example the `https://homeassistant.<your-domain>.duckcns.org`
+7. Create Passbolt superuser, change the email, first and last name before running the command:
+```docker-compose -f docker-compose.yaml exec passbolt su -m -c "/usr/share/php/passbolt/bin/cake \
+                                passbolt register_user \
+                                -u <your-email> \
+                                -f <first-name> \
+                                -l <last-name> \
+                                -r admin" -s /bin/sh www-data
+```
+8. If the command is correctly executed, Passbolt should provide an URL to do the first setup.
+9. You should now be able to access your services on the internet by going to the urls you defined, for example the `https://homeassistant.<your-domain>.duckcns.org`
 
 
 # Coming in the future
