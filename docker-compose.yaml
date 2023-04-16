@@ -1,0 +1,75 @@
+services:
+  homeassistant:
+    container_name: home-assistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.homeassistant-https.middlewares: "SslHeader@file"
+      traefik.http.routers.homeassistant-https.entrypoints: "websecure"
+      traefik.http.routers.homeassistant-https.rule: "Host(`homeassistant.<your-domain>.duckdns.org`)"
+      traefik.http.routers.homeassistant-https.tls: "true"
+      traefik.http.routers.homeassistant-https.tls.certresolver: "letsencrypt"
+    ports:
+      - 8123:8123
+    volumes:
+      - <your-path-to-HA-configuration-folder>:/config
+      - /etc/localtime:/etc/localtime
+      - <your-path-to-media-folder>:/media
+    restart: unless-stopped
+
+  passbolt-db:
+    image: mariadb:10.3
+    container_name: passbolt-db
+    restart: unless-stopped
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "true"
+      MYSQL_DATABASE: "passbolt"
+      MYSQL_USER: "passbolt"
+      MYSQL_PASSWORD: "<your-secure-password>"
+    volumes:
+      - database_volume:/var/lib/mysql
+
+  passbolt:
+    image: passbolt/passbolt:3.12.0-3-ce
+    container_name: passbolt
+    restart: unless-stopped
+    depends_on:
+      - passbolt-db
+    environment:
+      APP_FULL_BASE_URL: https://passbolt.<your-domain>.duckdns.org/
+      DATASOURCES_DEFAULT_HOST: "passbolt-db"
+      DATASOURCES_DEFAULT_USERNAME: "passbolt"
+      DATASOURCES_DEFAULT_PASSWORD: "<your-secure-password>"
+      DATASOURCES_DEFAULT_DATABASE: "passbolt"
+    volumes:
+      - gpg_volume:/etc/passbolt/gpg
+      - jwt_volume:/etc/passbolt/jwt
+	  command: ["/usr/bin/wait-for.sh", "-t", "0", "passbolt-db:3306", "--", "/docker-entrypoint.sh"]
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.passbolt-http.entrypoints: "web"
+      traefik.http.routers.passbolt-http.rule: "Host(`passbolt.<your-domain>.duckdns.org`)"
+      traefik.http.routers.passbolt-http.middlewares: "SslHeader@file"
+      traefik.http.routers.passbolt-https.middlewares: "SslHeader@file"
+      traefik.http.routers.passbolt-https.entrypoints: "websecure"
+      traefik.http.routers.passbolt-https.rule: "Host(`passbolt.<your-domain>.duckdns.org`)"
+      traefik.http.routers.passbolt-https.tls: "true"
+      traefik.http.routers.passbolt-https.tls.certresolver: "letsencrypt"
+  traefik:
+    image: traefik:2.6
+    container_name: traefik
+    restart: always
+    ports:
+      - 443:443
+      - 8080:8080
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yaml:/traefik.yaml:ro
+      - ./traefik/conf/:/etc/traefik/conf
+      - ./shared/:/shared
+
+volumes:
+  database_volume:
+  gpg_volume:
+  jwt_volume:
