@@ -22,13 +22,14 @@ You can follow the DuckDNS installation [here](https://www.duckdns.org/install.j
 ## Instalation
 
 1. Clone the repo
-   ```git clone https://github.com/peixoto-coding/house-server-on-rpi4.git```
+   `git clone https://github.com/peixoto-coding/house-server-on-rpi4.git`
 2. Create a folder for your Home Assistant configuration files, for example:
-   ```mkdir home-assistant-config```
+   `mkdir home-assistant-config`
 3. If you don't have a media folder in the device, create one for Home Assistant, for example:
-   ```mkdir home-assistant-media```
+   `mkdir home-assistant-media`
 4. Change the docker-compose.yaml file to reflect your folders, your DuckDNS domain and set a password for your Passbolt database
-   ```services:
+   ```
+   services:
         homeassistant:
           ...
           labels:
@@ -62,18 +63,19 @@ You can follow the DuckDNS installation [here](https://www.duckdns.org/install.j
             ...
             traefik.http.routers.passbolt-https.rule: "Host(`passbolt.<your-domain>.duckdns.org`)"
             ...
-```
-```
+
 5. Change your email in traefik.yaml file:
-```certificatesResolvers:
+```
+certificatesResolvers:
   letsencrypt:
     acme:
       email: <your-email-here>
 ```
 6. Run the docker-compose.yaml file:
-```docker-compose -f docker-compose.yaml up -d```
+`docker-compose -f docker-compose.yaml up -d`
 7. Create Passbolt superuser, change the email, first and last name before running the command:
-```docker-compose -f docker-compose.yaml exec passbolt su -m -c "/usr/share/php/passbolt/bin/cake \
+```
+docker-compose -f docker-compose.yaml exec passbolt su -m -c "/usr/share/php/passbolt/bin/cake \
                                 passbolt register_user \
                                 -u <your-email> \
                                 -f <first-name> \
